@@ -108,7 +108,7 @@ if (options.excludes) {  // при желании их обработку мож
   patternDjangoAppsFiles = devRelPath + patternDjangoApps + '/**/*';
 }
 // выбираем остальные расположения, которые будем исключать, и файлы в них 
-var patternExcluded = '+(node_modules|bower_components|backup)/';
+var patternExcluded = '+(node_modules|bower_components|backup)';
 var patternExcludedFolders = devRelPath + '**/*' + patternExcluded;
 var patternExcludedFiles = patternExcludedFolders + '/**/*';  // другие папки, которые всегда нужно игнорировать на любых уровнях
 
