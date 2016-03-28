@@ -165,17 +165,17 @@ gulp.task('build:css_js', function() {
   // записываю в переменную tasks результат выполнения метода .map (новый массив)
   var tasks = files.map(function(file) {  // этот метод Array.map пробегается по массиву files и к каждому элементу file применит функцию, в которой мы находимся:
     // формируем необходимые переменные
-    var entryDirName = path.dirname(file);  // получаем строку, содержащую путь к папке конкретного файла (file)
-    var entryBaseName = path.basename(file);  // получаем строку, содержащую только название файла
-    var entryExtName = path.extname(file);  // получаем строку, содержащую расширение файла (в данном случае будет '.css')
+    var fileDirName = path.dirname(file);  // получаем строку, содержащую путь к папке конкретного файла (file)
+    var fileBaseName = path.basename(file);  // получаем строку, содержащую только название файла
+    var fileExtName = path.extname(file);  // получаем строку, содержащую расширение файла (в данном случае будет '.css')
 
-    var endOfEntryPath = entryDirName.slice(devRelPath.length);  // отрезаем от строки с путём к папке вот эту часть: './project/static/dev/'
+    var endOfFilePath = fileDirName.slice(devRelPath.length);  // отрезаем от строки с путём к папке вот эту часть: './project/static/dev/'
     // таким образом у нас к примеру для папки './project/static/dev/hotels/css/' получится строка 'hotels/css/'
 
     // генерим абсолютный путь к этой папке в расположении для разработки (если нам это нужно)
-    var devAbsPath = path.resolve(devRelPath, endOfEntryPath);
+    var devAbsPath = path.resolve(devRelPath, endOfFilePath);
     // генерим абсолютный путь к папке, в которой файл должен оказаться в продакшене
-    var buildAbsPath = path.resolve(buildRelPath, endOfEntryPath);  
+    var buildAbsPath = path.resolve(buildRelPath, endOfFilePath);  
     // для того же примера: './project/static/build/' соединим с 'hotels/css/' и получим './project/static/build/hotels/css/'
     // Таким образом мы получили путь куда мы этот file будем перекладывать через gulp.dest()
 
