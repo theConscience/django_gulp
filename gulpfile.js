@@ -7,7 +7,7 @@
 // packages imports, все их сначала надо установить через:  npm install packagename --save-dev
 var gulp = require('gulp'),  // импортирую галп
   path = require('path'),  // импортирую пакет для работы с путями файлов:  https://nodejs.org/docs/latest/api/path.html
-  glob = require('glob'),  // импортирую пакет для глобальных переменных:  https://www.npmjs.com/package/glob
+  glob = require('glob'),  // импортирую пакет для обращения к файлам в операционной системе через регулярки:  https://www.npmjs.com/package/glob
   rename = require('gulp-rename'), // импортирую пакет для переименования:  https://www.npmjs.com/package/gulp-rename
   es = require('event-stream'),  // импортирую пакет для работы с потоками:  node.js https://www.npmjs.com/package/event-stream
   cssnano = require('gulp-cssnano'),  // минимизатор css:  https://www.npmjs.com/package/cssnano  http://cssnano.co/usage/
