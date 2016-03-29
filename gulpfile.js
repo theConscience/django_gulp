@@ -42,8 +42,8 @@ var knownOptions = {
     //'backup',  // флаг для бэкапа  --backup / --no-backup
     //'compress',  // флаг для компрессии  --compress / --no-compress
     //'beautify',  // флаг для созданий файла с красивым кодом  --beautify / --no-beautify
-    'git_modified',  // флаг для отслеживания файлов, у которых в Git репозитории статус 'modified'
-    'git_changed'  // флаг для отслеживания файлов, у которых в Git репозитории статус 'modified' или 'untracked' 
+    'git_modified_new',  // флаг для отслеживания файлов, у которых в Git репозитории статус 'modified'
+    'git_modified'  // флаг для отслеживания файлов, у которых в Git репозитории статус 'modified' или 'untracked' 
   ],
   alias: {  // алиасы, т.е. укороченные имена для флагов
     //'prod': 'production',
