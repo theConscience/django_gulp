@@ -186,9 +186,9 @@ gulp.task('build:css_js', function() {
     // Пишем 3 фильтра - для неминифицированного CSS, неминифицированного JS и общий, для минифицированных CSS и JS,
     // второй аргумент фильтра означает, что он запоминает состояние потока до того как был применён,
     // и мы можем в любой момент его восстановить к этому состоянию.
-    var nonMinifyedCssFilter = filter(patternFolder + patternFileCssNotMin, {restore: true});  // фильтр для не минифицированных CSS
-    var nonMinifyedJsFilter = filter(patternFolder + patternFileJsNotMin, {restore: true});  // фильтр для не минифицированных JS
-    var minifyedCssJsFilter = filter(patternFolder + patternFileCssJsOnlyMin, {restore: true});  // фильтр для минифицированных CSS и JS файлов
+    var nonMinifiedCssFilter = filter(patternFolder + patternFileCssNotMin, {restore: true});  // фильтр для не минифицированных CSS
+    var nonMinifiedJsFilter = filter(patternFolder + patternFileJsNotMin, {restore: true});  // фильтр для не минифицированных JS
+    var minifiedCssJsFilter = filter(patternFolder + patternFileCssJsOnlyMin, {restore: true});  // фильтр для минифицированных CSS и JS файлов
 
     // Пишем два независимых канала lazypipe, будем переходить в них из основного канала gulp.pipe(),
     // а по окончании, будем в него снова возвращаться. 
@@ -220,13 +220,13 @@ gulp.task('build:css_js', function() {
       .pipe(gulpIf(options.git_modified,  // если из консоли передана переменная для слежения за файлами с Git status = 'modified' и 'untracked'
         gitStatus({excludeStatus: 'unchanged'})  // исключаю только неизменные файлы, новые и изменённые оставляю
       ))
-      .pipe(nonMinifyedCssFilter)  // фильтруем только неминифицированный CSS
+      .pipe(nonMinifiedCssFilter)  // отфильтровываем только неминифицированный CSS
       .pipe(minifyCssChannel())  // переходим в канал для минификации CSS
-      .pipe(nonMinifyedCssFilter.restore)  // по возвращении сбрасываем фильтр
-      .pipe(nonMinifyedJsFilter)  // фильтруем только неминифицированный JS
+      .pipe(nonMinifiedCssFilter.restore)  // по возвращении сбрасываем фильтр
+      .pipe(nonMinifiedJsFilter)  // отфильтровываем только неминифицированный JS
       .pipe(minifyJsChannel())  // переходим в канал для минификации Js
-      .pipe(nonMinifyedJsFilter.restore)  // по возвращении сбрасываем фильтр
-      .pipe(minifyedCssJsFilter)  // фильтруем только минифицированные файлы
+      .pipe(nonMinifiedJsFilter.restore)  // по возвращении сбрасываем фильтр
+      .pipe(minifiedCssJsFilter)  // отфильтровываем только минифицированные файлы
       .pipe(gulp.dest(buildAbsPath));  // копируем все минифицированные файлы в продакшен
   });
 
