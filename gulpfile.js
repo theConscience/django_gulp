@@ -112,12 +112,12 @@ console.log('-------------------------------');
 
 // Глобальные переменные путей
 var thisPath = path.resolve(),  // возвращает строку с абсолютным путём к текущей папке, где лежит этот файл
-  templatesPath = './projectroot/templates/',  // относительный путь к вашей папке темплейтов
+  templatesRelPath = './projectroot/templates/',  // относительный путь к вашей папке темплейтов
   templatesDevRelPath = './projectroot/templates/dev/',  // относительный путь к вашей папке темплейтов
   templatesBuildRelPath = './projectroot/templates/build/',  // относительный путь к вашей папке темплейтов для продакшена
-  staticPath = './projectroot/static/',  // относительный путь к вашей папке статики
-  devRelPath = './projectroot/static/dev/',  // относительный путь к вашей папке статики для разработки
-  buildRelPath = './projectroot/static/build/';  // относительный путь к вашей папке статики для продакшена
+  staticRelPath = './projectroot/static/',  // относительный путь к вашей папке статики
+  staticDevRelPath = './projectroot/static/dev/',  // относительный путь к вашей папке статики для разработки
+  staticBuildRelPath = './projectroot/static/build/';  // относительный путь к вашей папке статики для продакшена
 
 /* Учтём возможность необходимости исключать какие-либо папки из процесса */
 // выбираем папки сторонних django-аппов,
@@ -126,12 +126,12 @@ var patternDjangoAppsFolders = '';
 var patternDjangoAppsFiles = '';
 if (options.excludes) {  // при желании их обработку можно будет отключить через флаг --no-exc в командной строке
   // в данном случае предполагается что аппы лежат в ./static/dev/_здесь_  - меняйте под свой проект.
-  patternDjangoAppsFolders = devRelPath + patternDjangoApps;
-  patternDjangoAppsFiles = devRelPath + patternDjangoApps + '/**/*';
+  patternDjangoAppsFolders = staticDevRelPath + patternDjangoApps;
+  patternDjangoAppsFiles = staticDevRelPath + patternDjangoApps + '/**/*';
 }
 // выбираем остальные расположения, которые будем исключать, и файлы в них 
 var patternExcluded = '+(node_modules|bower_components|backup)';
-var patternExcludedFolders = devRelPath + '**/*' + patternExcluded;
+var patternExcludedFolders = staticDevRelPath + '**/*' + patternExcluded;
 var patternExcludedFiles = patternExcludedFolders + '/**/*';  // другие папки, которые всегда нужно игнорировать на любых уровнях
 
 
@@ -174,24 +174,24 @@ gulp.task('build:css_js', function() {
   var patternFileCssJsNotMin = '!(*\.min).*(js|css)';  // любые CSS и JS без суффикса .min
   var patternFileCssJsOnlyMin = '*.min.*(css|js)';  // только .min.css или .min.js
   
-  var patternCss = devRelPath + patternFolder + patternFileCss;  // выбираю все css-ники во всех папках внутри /static/dev/ (папка для разработки)
-  var patternJs = devRelPath + patternFolder + patternFileJs;  // выбираю все js-ники во всех папках внутри /static/dev/
-  var patternCssJs = devRelPath + patternFolder + patternFileCssJs;  // выбираю все css и js файлы внутри /static/dev/
-  //var patternCssJsNotMin = devRelPath + patternFolder + patternFileCssJsNotMin;  // а вот так можно все css и js, если они без .min
-  //var patternCssJsOnlyMin = devRelPath + patternFolder + patternFileCssJsOnlyMin;  // только .min.css и .min.js
+  var patternCss = staticDevRelPath + patternFolder + patternFileCss;  // выбираю все css-ники во всех папках внутри /static/dev/ (папка для разработки)
+  var patternJs = staticDevRelPath + patternFolder + patternFileJs;  // выбираю все js-ники во всех папках внутри /static/dev/
+  var patternCssJs = staticDevRelPath + patternFolder + patternFileCssJs;  // выбираю все css и js файлы внутри /static/dev/
+  //var patternCssJsNotMin = staticDevRelPath + patternFolder + patternFileCssJsNotMin;  // а вот так можно все css и js, если они без .min
+  //var patternCssJsOnlyMin = staticDevRelPath + patternFolder + patternFileCssJsOnlyMin;  // только .min.css и .min.js
 
   var patternDefault = patternCssJs;  // дефолтный паттерн, допустим тут дефолтным будет тот, который любые CSS или JS файлы выбирает
   var patternFinal = patternDefault;  // финальный паттерн, по которому будем искать файлы через Glob
 
   // тут добавляю учёт консольных флагов при отборе файлов:
   if (options.cli_path) {  // если передан полный путь то он полностью перебивает паттерн который у нас в этом таске
-    patternFinal = devRelPath + options.cli_path;
+    patternFinal = staticDevRelPath + options.cli_path;
   } else if (options.cli_folder && options.cli_file) {  // если передан отдельно путь к папке и отдельно файл
-    patternFinal = devRelPath + options.cli_folder + options.cli_file;
+    patternFinal = staticDevRelPath + options.cli_folder + options.cli_file;
   } else if (options.cli_folder) {  // если передан только путь к папке 
-    patternFinal = devRelPath + options.cli_folder + patternFileCssJs;  // тогда путь к файлу берём дефолтный, в данном случае - для css и js
+    patternFinal = staticDevRelPath + options.cli_folder + patternFileCssJs;  // тогда путь к файлу берём дефолтный, в данном случае - для css и js
   } else if (options.cli_file) {  // если передан только путь к файлу 
-    patternFinal = devRelPath + patternFolder + options.cli_file;  // тогда путь к папке берём дефолтный
+    patternFinal = staticDevRelPath + patternFolder + options.cli_file;  // тогда путь к папке берём дефолтный
   }  // ну вот, вроде бы всё учли... 
   console.log('final pattern: ' + patternFinal);
 
@@ -210,13 +210,13 @@ gulp.task('build:css_js', function() {
     var fileBaseName = path.basename(file);  // получаем строку, содержащую только название файла
     var fileExtName = path.extname(file);  // получаем строку, содержащую расширение файла (в данном случае будет '.css')
 
-    var endOfFilePath = fileDirName.slice(devRelPath.length);  // отрезаем от строки с путём к папке вот эту часть: './project/static/dev/'
+    var endOfFilePath = fileDirName.slice(staticDevRelPath.length);  // отрезаем от строки с путём к папке вот эту часть: './project/static/dev/'
     // таким образом у нас к примеру для папки './project/static/dev/hotels/css/' получится строка 'hotels/css/'
 
     // генерим абсолютный путь к этой папке в расположении для разработки (если нам это нужно)
-    var devAbsPath = path.resolve(devRelPath, endOfFilePath);
+    var staticDevAbsPath = path.resolve(staticDevRelPath, endOfFilePath);
     // генерим абсолютный путь к папке, в которой файл должен оказаться в продакшене
-    var buildAbsPath = path.resolve(buildRelPath, endOfFilePath);  
+    var staticBuildAbsPath = path.resolve(staticBuildRelPath, endOfFilePath);  
     // для того же примера: './project/static/build/' соединим с 'hotels/css/' и получим './project/static/build/hotels/css/'
     // Таким образом мы получили путь куда мы этот file будем перекладывать через gulp.dest()
 
@@ -242,7 +242,7 @@ gulp.task('build:css_js', function() {
       .pipe(uglify)
       .pipe(rename, {suffix: '.min'})  // добавляем суффикс .min перед .js
       .pipe(chmod, parseInt(options.chmod))  // выставляем права на файлики
-      .pipe(gulp.dest, devAbsPath);  // последние два .pipe - по желанию, если хотим сохранять минифицированные копии в дев-расположении
+      .pipe(gulp.dest, staticDevAbsPath);  // последние два .pipe - по желанию, если хотим сохранять минифицированные копии в дев-расположении
 
     // канал для минификации CSS файлов
     var minifyCssChannel = lazypipe()
@@ -250,7 +250,7 @@ gulp.task('build:css_js', function() {
       .pipe(cssnano)
       .pipe(rename, {suffix: '.min'})  // добавляем суффикс .min перед .css
       .pipe(chmod, parseInt(options.chmod))  // выставляем права на файлики
-      .pipe(gulp.dest, devAbsPath);  // последние два .pipe - по желанию, если хотим сохранять минифицированные копии в дев-расположении
+      .pipe(gulp.dest, staticDevAbsPath);  // последние два .pipe - по желанию, если хотим сохранять минифицированные копии в дев-расположении
 
     // пока сюда попадают и обычные и минифицированные .css и .js файлы
     return gulp.src(file)  // пользуемся галпом как обычно, только у каждого файла будет свой gulp.dest
@@ -267,7 +267,7 @@ gulp.task('build:css_js', function() {
       .pipe(minifyJsChannel())  // переходим в канал для минификации Js
       .pipe(nonMinifiedJsFilter.restore)  // по возвращении сбрасываем фильтр
       .pipe(minifiedCssJsFilter)  // отфильтровываем только минифицированные файлы
-      .pipe(gulp.dest(buildAbsPath));  // копируем все минифицированные файлы в продакшен
+      .pipe(gulp.dest(staticBuildAbsPath));  // копируем все минифицированные файлы в продакшен
   });
 
   // объединяю все таски в единый поток(stream), это некая абстракция в node.js,
@@ -361,18 +361,18 @@ gulp.task('build:images', function() {
   // поисковые паттерны (через регулярки):
   var patternFolder = '**/';  // ищем во всех вложенных папках
   var patternFileImage = '*.+(png|jpg|jpeg|gif|svg)';  // ищем любые картинки
-  var patternImage = devRelPath + patternFolder + patternFileImage;  // выбираю все картинки во всех папках внутри /static/dev/ (папка для разработки)
+  var patternImage = staticDevRelPath + patternFolder + patternFileImage;  // выбираю все картинки во всех папках внутри /static/dev/ (папка для разработки)
   var patternFinal = patternImage;  // финальный паттерн, по которому будем искать файлы через Glob
 
   // тут добавляю учёт консольных флагов при отборе файлов:
   if (options.cli_path) {
-    patternFinal = devRelPath + options.cli_path;
+    patternFinal = staticDevRelPath + options.cli_path;
   } else if (options.cli_folder && options.cli_file) {
-    patternFinal = devRelPath + options.cli_folder + options.cli_file;
+    patternFinal = staticDevRelPath + options.cli_folder + options.cli_file;
   } else if (options.cli_folder) {
-    patternFinal = devRelPath + options.cli_folder + patternFileImage;
+    patternFinal = staticDevRelPath + options.cli_folder + patternFileImage;
   } else if (options.cli_file) {
-    patternFinal = devRelPath + patternFolder + options.cli_file;
+    patternFinal = staticDevRelPath + patternFolder + options.cli_file;
   }
   console.log('final pattern: ' + patternFinal);
 
@@ -388,10 +388,10 @@ gulp.task('build:images', function() {
     var fileBaseName = path.basename(file);  // получаем строку, содержащую только название файла
     var fileExtName = path.extname(file);  // получаем строку, содержащую расширение файла (в данном случае будет '.css')
 
-    var endOfFilePath = fileDirName.slice(devRelPath.length);  // отрезаем от строки с путём к папке вот эту часть: './project/static/dev/'
+    var endOfFilePath = fileDirName.slice(staticDevRelPath.length);  // отрезаем от строки с путём к папке вот эту часть: './project/static/dev/'
     //console.log('endOfFilePath', endOfFilePath);
-    var devAbsPath = path.resolve(devRelPath, endOfFilePath);
-    var buildAbsPath = path.resolve(buildRelPath, endOfFilePath);  
+    var staticDevAbsPath = path.resolve(staticDevRelPath, endOfFilePath);
+    var staticBuildAbsPath = path.resolve(staticBuildRelPath, endOfFilePath);  
 
     return gulp.src(file)
       .pipe(gulpIf(options.git_modified_untracked, gitStatus({excludeStatus: 'unchanged'})))  // если из консоли передан флаг --gimut отфильтровываю все файлы кроме git status: unchanged (неизменённые)
@@ -410,7 +410,7 @@ gulp.task('build:images', function() {
         //use: [pngquant({quality: '65-80'})]
       }))
       .pipe(gPrint(function(filepath) { return 'Image ' + filepath + ' is minified and copying to prod...'; })) 
-      .pipe(gulp.dest(buildAbsPath));  // копируем все минифицированные файлы в продакшен
+      .pipe(gulp.dest(staticBuildAbsPath));  // копируем все минифицированные файлы в продакшен
   });
 
   return es.merge.apply(null, tasks);  
@@ -421,30 +421,24 @@ gulp.task('build:images', function() {
 gulp.task('build:clean_static', function() {
   // переопределяем значения паттернов для продакшена, эти переменные нужны, чтобы не зачищать там каждый раз папки наших джанго аппов
   if (options.excludes) {  // данная команда с ключём --no-excludes[--no-exc] зачистит также и папки сторонних django-приложений
-    patternDjangoAppsFolders = buildRelPath + patternDjangoApps;
+    patternDjangoAppsFolders = staticBuildRelPath + patternDjangoApps;
     patternDjangoAppsFiles = patternDjangoAppsFolders + '**/*';
   }
   // из-за особенности работы del.sync() в отличии от glob.sync() приходится указывать в игнорах не только файлы, но и папки в которых они лежат
-  return del.sync(buildRelPath + '**/*', { ignore: [patternDjangoAppsFolders, patternDjangoAppsFiles]} );  // чистим статику продакшена кроме папок джанго-аппов 
+  return del.sync(staticBuildRelPath + '**/*', { ignore: [patternDjangoAppsFolders, patternDjangoAppsFiles]} );  // чистим статику продакшена кроме папок джанго-аппов 
 });
 
 
 // Таск для зачистки папки шаблонов продакшена
 gulp.task('build:clean_templates', function() {
-  // переопределяем значения паттернов для продакшена, эти переменные нужны, чтобы не зачищать там каждый раз папки наших джанго аппов
-  if (options.excludes) {  // данная команда с ключём --no-excludes[--no-exc] зачистит также и папки сторонних django-приложений
-    patternDjangoAppsFolders = buildRelPath + patternDjangoApps;
-    patternDjangoAppsFiles = patternDjangoAppsFolders + '**/*';
-  }
-  // из-за особенности работы del.sync() в отличии от glob.sync() приходится указывать в игнорах не только файлы, но и папки в которых они лежат
-  return del.sync(templatesBuildRelPath + '**/*', { ignore: [patternDjangoAppsFolders, patternDjangoAppsFiles]} );  // чистим статику продакшена кроме папок джанго-аппов 
+  return del.sync(templatesBuildRelPath + '**/*');  // чистим шаблоны продакшена
 });
 
 
 // Таск для копирования сторонних джанго-аппов в продакшн
 gulp.task('build:django_apps', function() {
   return gulp.src(patternDjangoAppsFiles)
-    .pipe(gulp.dest(buildRelPath));
+    .pipe(gulp.dest(staticBuildRelPath));
 });
 
 
