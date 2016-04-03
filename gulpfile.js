@@ -328,7 +328,13 @@ gulp.task('build:html', function() {
     // канал для минификации HTML файлов
     var minifyHtmlChannel = lazypipe()
       .pipe(gPrint, function(filepath) { return 'going to minify HTML file ' + filepath + ' rename, and copy to build dir.'; }) // принтим месседж
-      .pipe(htmlmin, {ignoreCustomFragments: [/{{\s*[\w\.]+\s*}}/g, /{%\s*.*?\s*%}/g, /{#\s*.*?\s*#}/g]});  // минифицирую html, исключаю шаблонные блоки джанги: {{}} {%%} {##} 
+      .pipe(htmlmin, {  // минифицируем html
+        collapseWhitespace: true,  // коллапсируем пробелы
+        removeComments: true,  // удаляем комментарии
+        minifyJS: true,  // минифицируем встроенный JS в тегах script
+        minifyCSS: true,  // минифицируем встроенный CSS в тегах style
+        ignoreCustomFragments: [/{{\s*[\w\.]+\s*}}/g, /{%\s*.*?\s*%}/g, /{#\s*.*?\s*#}/g]  // исключаю шаблонные блоки джанги: {{}} {%%} {##} 
+      });      
       //.pipe(rename, {suffix: '.min'});  // добавляем суффикс .min перед .html
 
     // пока сюда попадают и обычные и минифицированные .html файлы
@@ -412,7 +418,7 @@ gulp.task('build:images', function() {
 
 
 // Таск для зачистки папки продакшена
-gulp.task('build:clean', function() {
+gulp.task('build:clean_static', function() {
   // переопределяем значения паттернов для продакшена, эти переменные нужны, чтобы не зачищать там каждый раз папки наших джанго аппов
   if (options.excludes) {  // данная команда с ключём --no-excludes[--no-exc] зачистит также и папки сторонних django-приложений
     patternDjangoAppsFolders = buildRelPath + patternDjangoApps;
@@ -420,6 +426,18 @@ gulp.task('build:clean', function() {
   }
   // из-за особенности работы del.sync() в отличии от glob.sync() приходится указывать в игнорах не только файлы, но и папки в которых они лежат
   return del.sync(buildRelPath + '**/*', { ignore: [patternDjangoAppsFolders, patternDjangoAppsFiles]} );  // чистим статику продакшена кроме папок джанго-аппов 
+});
+
+
+// Таск для зачистки папки продакшена
+gulp.task('build:clean_templates', function() {
+  // переопределяем значения паттернов для продакшена, эти переменные нужны, чтобы не зачищать там каждый раз папки наших джанго аппов
+  if (options.excludes) {  // данная команда с ключём --no-excludes[--no-exc] зачистит также и папки сторонних django-приложений
+    patternDjangoAppsFolders = buildRelPath + patternDjangoApps;
+    patternDjangoAppsFiles = patternDjangoAppsFolders + '**/*';
+  }
+  // из-за особенности работы del.sync() в отличии от glob.sync() приходится указывать в игнорах не только файлы, но и папки в которых они лежат
+  return del.sync(templatesBuildRelPath + '**/*', { ignore: [patternDjangoAppsFolders, patternDjangoAppsFiles]} );  // чистим статику продакшена кроме папок джанго-аппов 
 });
 
 
