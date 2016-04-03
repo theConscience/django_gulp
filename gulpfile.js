@@ -327,7 +327,7 @@ gulp.task('build:html', function() {
 
     // канал для минификации HTML файлов
     var minifyHtmlChannel = lazypipe()
-      .pipe(gPrint, function(filepath) { return 'going to minify JS file ' + filepath + ' rename, and copy to build dir.'; }) // принтим месседж
+      .pipe(gPrint, function(filepath) { return 'going to minify HTML file ' + filepath + ' rename, and copy to build dir.'; }) // принтим месседж
       .pipe(htmlmin, {ignoreCustomFragments: [/{{\s*[\w\.]+\s*}}/g, /{%\s*.*?\s*%}/g, /{#\s*.*?\s*#}/g]});  // минифицирую html, исключаю шаблонные блоки джанги: {{}} {%%} {##} 
       //.pipe(rename, {suffix: '.min'});  // добавляем суффикс .min перед .html
 
