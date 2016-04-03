@@ -12,6 +12,9 @@ var gulp = require('gulp'),  // импортирую галп
   es = require('event-stream'),  // импортирую пакет для работы с потоками:  node.js https://www.npmjs.com/package/event-stream
   cssnano = require('gulp-cssnano'),  // минимизатор css:  https://www.npmjs.com/package/cssnano  http://cssnano.co/usage/
   uglify = require('gulp-uglify'),  // минимизатор js:  https://www.npmjs.com/package/gulp-uglify
+  htmlmin = require('gulp-htmlmin'),  // минимизатор html:  https://www.npmjs.com/package/gulp-htmlmin  https://github.com/kangax/html-minifier  почитать про ignoreCustomFragments
+  imagemin = require('gulp-imagemin'),  // минимизатор картинок: https://github.com/sindresorhus/gulp-imagemin  https://github.com/imagemin/imagemin
+  //pngquant = require('imagemin-pngquant'),  // минимизатор png, работает как плагин для imagemin
   minimist = require('minimist'),  // импортирую пакет для вытаскивания значений флагов из введённой в консоли команды:  http://ricostacruz.com/cheatsheets/minimist.html  https://www.npmjs.com/package/minimist
   filter = require('gulp-filter'),  // импортирую пакет, который позволяет фильтровать файлы в потоке через регулярки:  https://www.npmjs.com/package/gulp-filter
   lazypipe = require('lazypipe'),  // импортирую пакет для создания независимых пайплайнов задач, в которые можно в любой момент переходить из основного:  https://www.npmjs.com/package/lazypipe
@@ -20,6 +23,7 @@ var gulp = require('gulp'),  // импортирую галп
   del = require('del'),  // импортирую пакет для удаления файлов:  https://www.npmjs.com/package/del
   gitStatus = require('gulp-git-status'),  // импортирую пакет для работы с гит-статусами файлов:  https://www.npmjs.com/package/gulp-git-status
   gulpIf = require('gulp-if');  // условный оператор для использования внутри gulp.pipe():  https://www.npmjs.com/package/gulp-if
+
 
 /*
  * Настройки
@@ -42,8 +46,12 @@ var knownOptions = {
     //'backup',  // флаг для бэкапа  --backup / --no-backup
     //'compress',  // флаг для компрессии  --compress / --no-compress
     //'beautify',  // флаг для созданий файла с красивым кодом  --beautify / --no-beautify
-    'git_modified_new',  // флаг для отслеживания файлов, у которых в Git репозитории статус 'modified'
-    'git_modified'  // флаг для отслеживания файлов, у которых в Git репозитории статус 'modified' или 'untracked' 
+    'git_modified_untracked',  // флаг для отслеживания файлов, у которых в Git репозитории статусы 'modified' или 'untracked'
+    'git_modified_unchanged',  // флаг для отслеживания файлов, у которых в Git репозитории статусы 'modified' или 'unchanged'
+    'git_untracked_unchanged',  // флаг для отслеживания файлов, у которых в Git репозитории статусы 'untracked' или 'unchanged'
+    'git_modified',  // флаг для отслеживания файлов, у которых в Git репозитории статус 'modified'
+    'git_untracked',  // флаг для отслеживания файлов, у которых в Git репозитории статус 'untracked'
+    'git_unchanged'  // флаг для отслеживания файлов, у которых в Git репозитории статус 'unchanged'
   ],
   alias: {  // алиасы, т.е. укороченные имена для флагов
     //'prod': 'production',
@@ -56,8 +64,12 @@ var knownOptions = {
     //'bu': 'backup',
     //'min': 'compress',
     //'btf': 'beautify',
-    'gimn': 'git_modified_new',
-    'gim': 'git_modified'
+    'gimut': 'git_modified_untracked',
+    'gimuc': 'git_modified_unchanged',
+    'giutuc': 'git_untracked_unchanged',
+    'gim': 'git_modified',
+    'giut': 'git_untracked',
+    'giuc': 'git_unchanged'
   },
   default: {  // дефолтные значения флагов
     //'production': false,
@@ -67,8 +79,12 @@ var knownOptions = {
     'chmod': 755,
     //'compress': false,
     //'beautify': false,
-    'git_modified_new': false,
-    'git_modified': false
+    'git_modified_untracked': false,
+    'git_modified_unchanged': false,
+    'git_untracked_unchanged': false,
+    'git_modified': false,
+    'git_untracked': false,
+    'git_unchanged': false
   }
 };
 
@@ -86,13 +102,19 @@ console.log('options.excludes = ' + options.exc);
 console.log('options.chmod = ' + options.chmod);
 //console.log('options.compress = ' + options.min);
 //console.log('options.beautify = ' + options.btf);
-console.log('options.git_modified_new = ' + options.gimn);
+console.log('options.git_modified_untracked = ' + options.gimut);
+console.log('options.git_modified_unchanged = ' + options.gimuc);
+console.log('options.git_untracked_unchanged = ' + options.giutuc);
 console.log('options.git_modified = ' + options.gim);
+console.log('options.git_untracked = ' + options.giut);
+console.log('options.git_unchanged = ' + options.giuc);
 console.log('-------------------------------');
 
 // Глобальные переменные путей
 var thisPath = path.resolve(),  // возвращает строку с абсолютным путём к текущей папке, где лежит этот файл
-  templatesRelPath = './projectroot/templates/',  // относительный путь к вашей папке темплейтов
+  templatesPath = './projectroot/templates/',  // относительный путь к вашей папке темплейтов
+  templatesDevRelPath = './projectroot/templates/dev/',  // относительный путь к вашей папке темплейтов
+  templatesBuildRelPath = './projectroot/templates/build/',  // относительный путь к вашей папке темплейтов для продакшена
   staticPath = './projectroot/static/',  // относительный путь к вашей папке статики
   devRelPath = './projectroot/static/dev/',  // относительный путь к вашей папке статики для разработки
   buildRelPath = './projectroot/static/build/';  // относительный путь к вашей папке статики для продакшена
@@ -111,6 +133,23 @@ if (options.excludes) {  // при желании их обработку мож
 var patternExcluded = '+(node_modules|bower_components|backup)';
 var patternExcludedFolders = devRelPath + '**/*' + patternExcluded;
 var patternExcludedFiles = patternExcludedFolders + '/**/*';  // другие папки, которые всегда нужно игнорировать на любых уровнях
+
+
+// глобальные каналы для работы с git
+var gitModifiedChannel = lazypipe()
+  .pipe(gitStatus, {excludeStatus: 'unchanged'})
+  .pipe(gitStatus, {excludeStatus: 'untracked'})
+  .pipe(gPrint, function(filename) { return 'File ' + filename + ' is modified!'; });
+
+var gitUntrackedChannel = lazypipe()
+  .pipe(gitStatus, {excludeStatus: 'modified'})
+  .pipe(gitStatus, {excludeStatus: 'unchanged'})
+  .pipe(gPrint, function(filename) { return 'File ' + filename + ' is untracked!'; });
+
+var gitUnchangedChannel = lazypipe()
+  .pipe(gitStatus, {excludeStatus: 'untracked'})
+  .pipe(gitStatus, {excludeStatus: 'modified'})
+  .pipe(gPrint, function(filename) { return 'File ' + filename + ' is unchanged!'; });
 
 
 /*
@@ -146,14 +185,15 @@ gulp.task('build:css_js', function() {
 
   // тут добавляю учёт консольных флагов при отборе файлов:
   if (options.cli_path) {  // если передан полный путь то он полностью перебивает паттерн который у нас в этом таске
-    patternFinal = options.cli_path;
+    patternFinal = devRelPath + options.cli_path;
   } else if (options.cli_folder && options.cli_file) {  // если передан отдельно путь к папке и отдельно файл
-    patternFinal = options.cli_folder + options.cli_file;
+    patternFinal = devRelPath + options.cli_folder + options.cli_file;
   } else if (options.cli_folder) {  // если передан только путь к папке 
-    patternFinal = options.cli_folder + patternFileCssJs;  // тогда путь к файлу берём дефолтный, в данном случае - для css и js
+    patternFinal = devRelPath + options.cli_folder + patternFileCssJs;  // тогда путь к файлу берём дефолтный, в данном случае - для css и js
   } else if (options.cli_file) {  // если передан только путь к файлу 
-    patternFinal = patternFolder + options.cli_file;  // тогда путь к папке берём дефолтный
+    patternFinal = devRelPath + patternFolder + options.cli_file;  // тогда путь к папке берём дефолтный
   }  // ну вот, вроде бы всё учли... 
+  console.log('final pattern: ' + patternFinal);
 
   // получаю в переменную массив строк, каждая строка - путь к одному css или js файлу
   var files = glob.sync(patternFinal, {ignore: [patternDjangoAppsFiles, patternExcludedFiles]});  // вторым аргументом передаём массив строк с паттернами игнорируемых файлов
@@ -166,6 +206,7 @@ gulp.task('build:css_js', function() {
   var tasks = files.map(function(file) {  // этот метод Array.map пробегается по массиву files и к каждому элементу file применит функцию, в которой мы находимся:
     // формируем необходимые переменные
     var fileDirName = path.dirname(file);  // получаем строку, содержащую путь к папке конкретного файла (file)
+    //console.log('fileDirName ' + fileDirName);
     var fileBaseName = path.basename(file);  // получаем строку, содержащую только название файла
     var fileExtName = path.extname(file);  // получаем строку, содержащую расширение файла (в данном случае будет '.css')
 
@@ -213,13 +254,12 @@ gulp.task('build:css_js', function() {
 
     // пока сюда попадают и обычные и минифицированные .css и .js файлы
     return gulp.src(file)  // пользуемся галпом как обычно, только у каждого файла будет свой gulp.dest
-      .pipe(gulpIf(options.git_modified_new,  // если из консоли передана переменная для слежения за файлами с Git status = 'modified'
-        gitStatus({excludeStatus: 'unchanged'}),  // исключаю неизменные файлы
-        gitStatus({excludeStatus: 'untracked'})  // исключаю новые файлы, которым ещё не сделали git add
-      ))
-      .pipe(gulpIf(options.git_modified,  // если из консоли передана переменная для слежения за файлами с Git status = 'modified' и 'untracked'
-        gitStatus({excludeStatus: 'unchanged'})  // исключаю только неизменные файлы, новые и изменённые оставляю
-      ))
+      .pipe(gulpIf(options.git_modified_untracked, gitStatus({excludeStatus: 'unchanged'})))  // если из консоли передан флаг --gimut отфильтровываю все файлы кроме git status: unchanged (неизменённые)
+      .pipe(gulpIf(options.git_modified_unchanged, gitStatus({excludeStatus: 'untracked'})))  // передан флаг --giutuc отфильтровываю все файлы кроме git status: untracked (новые)
+      .pipe(gulpIf(options.git_untracked_unchanged, gitStatus({excludeStatus: 'modified'})))  // передан флаг --giutuc отфильтровываю все файлы кроме git status: modified
+      .pipe(gulpIf(options.git_modified, gitModifiedChannel()))  // передан флаг --gim отфильтровываю только изменённые файлы (с git status: modified)
+      .pipe(gulpIf(options.git_untracked, gitUntrackedChannel()))  // передан флаг --giut отфильтровываю только новые файлы (с git status: untracked)
+      .pipe(gulpIf(options.git_unchanged, gitUnchangedChannel()))  // передан флаг --giuc отфильтровываю только неизменные файлы (с git status: unchanged)
       .pipe(nonMinifiedCssFilter)  // отфильтровываем только неминифицированный CSS
       .pipe(minifyCssChannel())  // переходим в канал для минификации CSS
       .pipe(nonMinifiedCssFilter.restore)  // по возвращении сбрасываем фильтр
@@ -232,6 +272,141 @@ gulp.task('build:css_js', function() {
 
   // объединяю все таски в единый поток(stream), это некая абстракция в node.js,
   // некий такой тип объекта, который метод gulp.task должен возвращать
+  return es.merge.apply(null, tasks);  
+});
+
+
+// Таск для минификации html и копирования его в папку продакшена
+gulp.task('build:html', function() {
+  // поисковые паттерны (через регулярки):
+  var patternFolder = '**/';  // ищем во всех вложенных папках
+
+  var patternFileHtml = '*.html';  // ищем любые HTML файлы
+
+  var patternFileHtmlNotMin = '!(*\.min).html';  // ищем любые неминифицированные HTML файлы
+  var patternFileHtmlOnlyMin = '*.min.html'; // ищем только минифицированные HTML файлы
+  
+  var patternHtml = templatesDevRelPath + patternFolder + patternFileHtml;  // выбираю все html во всех папках внутри /templates/dev/ (папка для разработки)
+  //var patternHtmlNotMin = templatesDevRelPath + patternFolder + patternFileHtmlNotMin;  // все html, если они без .min
+  //var patternHtmlOnlyMin = templatesDevRelPath + patternFolder + patternFileHtmlOnlyMin;  // только .min.html
+
+  var patternDefault = patternHtml;  // дефолтный паттерн
+  var patternFinal = patternDefault;  // финальный паттерн, по которому будем искать файлы через Glob
+
+  // тут добавляю учёт консольных флагов при отборе файлов:
+  if (options.cli_path) {
+    patternFinal = templatesDevRelPath + options.cli_path;
+  } else if (options.cli_folder && options.cli_file) {
+    patternFinal = templatesDevRelPath + options.cli_folder + options.cli_file;
+  } else if (options.cli_folder) {
+    patternFinal = templatesDevRelPath + options.cli_folder + patternFileHtml;
+  } else if (options.cli_file) {
+    patternFinal = templatesDevRelPath + patternFolder + options.cli_file;
+  }
+  console.log('final pattern: ' + patternFinal);
+
+  var files = glob.sync(patternFinal, {ignore: [patternDjangoAppsFiles, patternExcludedFiles]});
+  console.log('Получившаяся выборка файлов:');
+  for (var i = 0; i < files.length; i++) {
+    console.log(files[i]);
+  }
+
+  var tasks = files.map(function(file) {
+    var fileDirName = path.dirname(file);  // получаем строку, содержащую путь к папке конкретного файла (file)
+    //console.log('fileDirName', fileDirName);
+    var fileBaseName = path.basename(file);  // получаем строку, содержащую только название файла
+    var fileExtName = path.extname(file);  // получаем строку, содержащую расширение файла (в данном случае будет '.css')
+
+    var endOfFilePath = fileDirName.slice(templatesDevRelPath.length);  // отрезаем от строки с путём к папке вот эту часть: './project/templates/dev/'
+    //console.log('endOfFilePath', endOfFilePath);
+    var templatesDevAbsPath = path.resolve(templatesDevRelPath, endOfFilePath);
+    var templatesBuildAbsPath = path.resolve(templatesBuildRelPath, endOfFilePath);  
+
+    var nonMinifiedHtmlFilter = filter(patternFolder + patternFileHtmlNotMin, {restore: true});  // фильтр для не минифицированных HTML
+    var minifiedHtmlFilter = filter(patternFolder + patternFileHtmlOnlyMin, {restore: true});  // фильтр для минифицированных HTML файлов
+
+    // канал для минификации HTML файлов
+    var minifyHtmlChannel = lazypipe()
+      .pipe(gPrint, function(filepath) { return 'going to minify JS file ' + filepath + ' rename, and copy to build dir.'; }) // принтим месседж
+      .pipe(htmlmin, {ignoreCustomFragments: [/{{\s*[\w\.]+\s*}}/g, /{%\s*.*?\s*%}/g, /{#\s*.*?\s*#}/g]});  // минифицирую html, исключаю шаблонные блоки джанги: {{}} {%%} {##} 
+      //.pipe(rename, {suffix: '.min'});  // добавляем суффикс .min перед .html
+
+    // пока сюда попадают и обычные и минифицированные .html файлы
+    return gulp.src(file)
+      .pipe(gulpIf(options.git_modified_untracked, gitStatus({excludeStatus: 'unchanged'})))  // если из консоли передан флаг --gimut отфильтровываю все файлы кроме git status: unchanged (неизменённые)
+      .pipe(gulpIf(options.git_modified_unchanged, gitStatus({excludeStatus: 'untracked'})))  // передан флаг --giutuc отфильтровываю все файлы кроме git status: untracked (новые)
+      .pipe(gulpIf(options.git_untracked_unchanged, gitStatus({excludeStatus: 'modified'})))  // передан флаг --giutuc отфильтровываю все файлы кроме git status: modified
+      .pipe(gulpIf(options.git_modified, gitModifiedChannel()))  // передан флаг --gim отфильтровываю только изменённые файлы (с git status: modified)
+      .pipe(gulpIf(options.git_untracked, gitUntrackedChannel()))  // передан флаг --giut отфильтровываю только новые файлы (с git status: untracked)
+      .pipe(gulpIf(options.git_unchanged, gitUnchangedChannel()))  // передан флаг --giuc отфильтровываю только неизменные файлы (с git status: unchanged)
+      .pipe(nonMinifiedHtmlFilter)  // отфильтровываем только неминифицированный HTML
+      .pipe(minifyHtmlChannel())  // переходим в канал для минификации HTML
+      .pipe(nonMinifiedHtmlFilter.restore)  // по возвращении сбрасываем фильтр
+      //.pipe(minifiedHtmlFilter)  // отфильтровываем только минифицированные файлы
+      .pipe(gulp.dest(templatesBuildAbsPath));  // копируем все минифицированные файлы в продакшен
+  });
+
+  return es.merge.apply(null, tasks);  
+});
+
+
+// Таск для минификации картинок и копирования в папку продакшена
+gulp.task('build:images', function() {
+  // поисковые паттерны (через регулярки):
+  var patternFolder = '**/';  // ищем во всех вложенных папках
+  var patternFileImage = '*.+(png|jpg|jpeg|gif|svg)';  // ищем любые картинки
+  var patternImage = devRelPath + patternFolder + patternFileImage;  // выбираю все картинки во всех папках внутри /static/dev/ (папка для разработки)
+  var patternFinal = patternImage;  // финальный паттерн, по которому будем искать файлы через Glob
+
+  // тут добавляю учёт консольных флагов при отборе файлов:
+  if (options.cli_path) {
+    patternFinal = devRelPath + options.cli_path;
+  } else if (options.cli_folder && options.cli_file) {
+    patternFinal = devRelPath + options.cli_folder + options.cli_file;
+  } else if (options.cli_folder) {
+    patternFinal = devRelPath + options.cli_folder + patternFileImage;
+  } else if (options.cli_file) {
+    patternFinal = devRelPath + patternFolder + options.cli_file;
+  }
+  console.log('final pattern: ' + patternFinal);
+
+  var files = glob.sync(patternFinal, {ignore: [patternDjangoAppsFiles, patternExcludedFiles]});
+  console.log('Получившаяся выборка файлов:');
+  for (var i = 0; i < files.length; i++) {
+    console.log(files[i]);
+  }
+
+  var tasks = files.map(function(file) {
+    var fileDirName = path.dirname(file);  // получаем строку, содержащую путь к папке конкретного файла (file)
+    //console.log('fileDirName', fileDirName);
+    var fileBaseName = path.basename(file);  // получаем строку, содержащую только название файла
+    var fileExtName = path.extname(file);  // получаем строку, содержащую расширение файла (в данном случае будет '.css')
+
+    var endOfFilePath = fileDirName.slice(devRelPath.length);  // отрезаем от строки с путём к папке вот эту часть: './project/static/dev/'
+    //console.log('endOfFilePath', endOfFilePath);
+    var devAbsPath = path.resolve(devRelPath, endOfFilePath);
+    var buildAbsPath = path.resolve(buildRelPath, endOfFilePath);  
+
+    return gulp.src(file)
+      .pipe(gulpIf(options.git_modified_untracked, gitStatus({excludeStatus: 'unchanged'})))  // если из консоли передан флаг --gimut отфильтровываю все файлы кроме git status: unchanged (неизменённые)
+      .pipe(gulpIf(options.git_modified_unchanged, gitStatus({excludeStatus: 'untracked'})))  // передан флаг --giutuc отфильтровываю все файлы кроме git status: untracked (новые)
+      .pipe(gulpIf(options.git_untracked_unchanged, gitStatus({excludeStatus: 'modified'})))  // передан флаг --giutuc отфильтровываю все файлы кроме git status: modified
+      .pipe(gulpIf(options.git_modified, gitModifiedChannel()))  // передан флаг --gim отфильтровываю только изменённые файлы (с git status: modified)
+      .pipe(gulpIf(options.git_untracked, gitUntrackedChannel()))  // передан флаг --giut отфильтровываю только новые файлы (с git status: untracked)
+      .pipe(gulpIf(options.git_unchanged, gitUnchangedChannel()))  // передан флаг --giuc отфильтровываю только неизменные файлы (с git status: unchanged)
+      .pipe(imagemin({
+        interlaced: true,
+        progressive: true,
+        svgoPlugins: [
+            {removeViewBox: false},
+            {cleanupIDs: false}
+        ]
+        //use: [pngquant({quality: '65-80'})]
+      }))
+      .pipe(gPrint(function(filepath) { return 'Image ' + filepath + ' is minified and copying to prod...'; })) 
+      .pipe(gulp.dest(buildAbsPath));  // копируем все минифицированные файлы в продакшен
+  });
+
   return es.merge.apply(null, tasks);  
 });
 
