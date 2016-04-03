@@ -34,7 +34,7 @@ var gulp = require('gulp'),  // импортирую галп
 var knownOptions = {
   // закомментированные - пока не используются!
   string: [  // строковые консольные флаги
-    'cli_folder',  // для указания папки, к которой применить команду  --cli_folder=somefolder/subfolder/
+    'cli_directory',  // для указания папки, к которой применить команду  --cli_directory=somefolder/subfolder/
     'cli_file',  // для указания файла, к которому применить команду  --cli_file=somefile.ext
     'cli_path',  // для указания полного пути к файлу, к которому применить команду  --cli_path='./somefolder/subfolder/somefile.ext'
     'chmod'  // для указания прав на создаваемые файлы
@@ -55,7 +55,7 @@ var knownOptions = {
   ],
   alias: {  // алиасы, т.е. укороченные имена для флагов
     //'prod': 'production',
-    'dir': 'cli_folder',
+    'dir': 'cli_directory',
     'f': 'cli_file',
     'p': 'cli_path',
     'exc': 'excludes',
@@ -93,7 +93,7 @@ var options = minimist(process.argv.slice(2), knownOptions);  // записыв�
 // Теперь можем к ним обращаться через options.optioname:
 console.log('\nACTIVE OPTIONS');
 //console.log('options.production = ' + options.prod);
-console.log('options.cli_folder = ' + options.dir);
+console.log('options.cli_directory = ' + options.dir);
 console.log('options.cli_file = ' + options.f);
 console.log('options.cli_path = ' + options.p);
 console.log('options.excludes = ' + options.exc);
@@ -186,10 +186,10 @@ gulp.task('build:css_js', function() {
   // тут добавляю учёт консольных флагов при отборе файлов:
   if (options.cli_path) {  // если передан полный путь то он полностью перебивает паттерн который у нас в этом таске
     patternFinal = staticDevRelPath + options.cli_path;
-  } else if (options.cli_folder && options.cli_file) {  // если передан отдельно путь к папке и отдельно файл
-    patternFinal = staticDevRelPath + options.cli_folder + options.cli_file;
-  } else if (options.cli_folder) {  // если передан только путь к папке 
-    patternFinal = staticDevRelPath + options.cli_folder + patternFileCssJs;  // тогда путь к файлу берём дефолтный, в данном случае - для css и js
+  } else if (options.cli_directory && options.cli_file) {  // если передан отдельно путь к папке и отдельно файл
+    patternFinal = staticDevRelPath + options.cli_directory + options.cli_file;
+  } else if (options.cli_directory) {  // если передан только путь к папке 
+    patternFinal = staticDevRelPath + options.cli_directory + patternFileCssJs;  // тогда путь к файлу берём дефолтный, в данном случае - для css и js
   } else if (options.cli_file) {  // если передан только путь к файлу 
     patternFinal = staticDevRelPath + patternFolder + options.cli_file;  // тогда путь к папке берём дефолтный
   }  // ну вот, вроде бы всё учли... 
@@ -296,10 +296,10 @@ gulp.task('build:html', function() {
   // тут добавляю учёт консольных флагов при отборе файлов:
   if (options.cli_path) {
     patternFinal = templatesDevRelPath + options.cli_path;
-  } else if (options.cli_folder && options.cli_file) {
-    patternFinal = templatesDevRelPath + options.cli_folder + options.cli_file;
-  } else if (options.cli_folder) {
-    patternFinal = templatesDevRelPath + options.cli_folder + patternFileHtml;
+  } else if (options.cli_directory && options.cli_file) {
+    patternFinal = templatesDevRelPath + options.cli_directory + options.cli_file;
+  } else if (options.cli_directory) {
+    patternFinal = templatesDevRelPath + options.cli_directory + patternFileHtml;
   } else if (options.cli_file) {
     patternFinal = templatesDevRelPath + patternFolder + options.cli_file;
   }
@@ -367,10 +367,10 @@ gulp.task('build:images', function() {
   // тут добавляю учёт консольных флагов при отборе файлов:
   if (options.cli_path) {
     patternFinal = staticDevRelPath + options.cli_path;
-  } else if (options.cli_folder && options.cli_file) {
-    patternFinal = staticDevRelPath + options.cli_folder + options.cli_file;
-  } else if (options.cli_folder) {
-    patternFinal = staticDevRelPath + options.cli_folder + patternFileImage;
+  } else if (options.cli_directory && options.cli_file) {
+    patternFinal = staticDevRelPath + options.cli_directory + options.cli_file;
+  } else if (options.cli_directory) {
+    patternFinal = staticDevRelPath + options.cli_directory + patternFileImage;
   } else if (options.cli_file) {
     patternFinal = staticDevRelPath + patternFolder + options.cli_file;
   }
